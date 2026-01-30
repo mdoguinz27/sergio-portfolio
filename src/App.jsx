@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X } from 'lucide-react';
 import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
