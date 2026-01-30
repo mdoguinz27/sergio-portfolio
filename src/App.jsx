@@ -42,7 +42,7 @@ const App = () => {
             {['Experiencia', 'Habilidades', 'Educación', 'Contacto'].map((item) => (
               <button
                 key={item}
-                onClick={() => scrollTo(item.toLowerCase())}
+                onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
                 className="hover:text-blue-400 transition-colors uppercase"
               >
                 {item}
