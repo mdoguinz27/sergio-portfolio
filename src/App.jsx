@@ -20,10 +20,10 @@ const App = () => {
       profileImage: "sergio.jpg"
     },
     experience: [
-      { role: "Camarógrafo (Freelance)", company: "Gimbal Producciones", location: "Argentina", period: "Actualmente", description: " Llevar a cabo tomas para programa de youtube,asistir al talento ,su posicion de luz y movimientos a realizar con la cámara.grabación con cámaras sony xdcam-ex 4k." },
       { role: "Camarógrafo (Freelance)", company: "A+V Eventos", location: "Argentina", period: "Actualmente", description: " Vivo para redes o grabación, manejo de los equipos de video con definicion hd o 4k. balance de cámaras,ejecutar planos de acuerdo a la ocasión,composicion y encuadres ,traveling y todo lo necesario para concretar la grabacion." },
+      { role: "Camarógrafo (Freelance)", company: "Gimbal Producciones", location: "Argentina", period: "2025 - 2026", description: " Llevar a cabo tomas para programa de youtube,asistir al talento ,su posicion de luz y movimientos a realizar con la cámara. Grabación con cámaras sony xdcam-ex 4k." },
       { role: "Camarógrafo de Estudio y Exteriores", company: "Televen", location: "Venezuela", period: "2012 - 2018", description: "Encargado de manejar la cámara y captar imágenes haciendo movimientos o planos fijos,Ubicar a los Talentos en posicion de luz,estratégica para la composicion del plano.Utilizacion de auriculares para recibir instruciones del Director encargado y central de video. Colocar las Cámaras en posicion para balance de blancos. Ejecutar movimientos travelling,dolly in, dolly out,panning,tilt up,tilt down con o sin tripode de manera creativa siempre y cuando exista un plano justificado. Coordinar de manera efectiva con los asistentes de cámaras los movimientos a realizar." },
-      { role: "Camarógrafo", company: "Venevisión", location: "Venezuela", period: "2008 - 2012", description: "Titular de estudio de television como variedades y dramaticos,como Portadas, A que te ries, Que locura, programas de entrenimiento. Captar imagenes de momentos, en la grabaciones o señal en vivo. siguiendo las ordenes del Director,Manejo de planos,composicion y encuadre. Experiencia en Cámaras con tripode y portatil." },
+      { role: "Camarógrafo", company: "Venevisión", location: "Venezuela", period: "2008 - 2012", description: "Titular de estudio de television como variedades y dramaticos,como 'Portadas, A que te ries, Que locura' y demás programas de entrenimiento. Captar imagenes de momentos, en la grabaciones o señal en vivo. siguiendo las ordenes del Director,Manejo de planos,composicion y encuadre. Experiencia en Cámaras con tripode y portatil." },
       { role: "Camarógrafo", company: "RCTV", location: "Venezuela", period: "2007 - 2008", description: " Ejecutar planos acorde a lo solicitado por el director, movimientos y planos secuencias. ubicar al periodista en la luz indicada." }
     ],
     education: [
@@ -120,12 +120,29 @@ const App = () => {
   };
 
   const uploadFile = async (file) => {
+    // Validar tipo de archivo
+    const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+    const allValidTypes = [...validImageTypes, ...validVideoTypes];
+
+    if (!allValidTypes.includes(file.type)) {
+      alert(`Formato no permitido. \n\nFormatos de imagen: JPG, PNG, GIF, WebP\nFormatos de video: MP4, WebM, MOV, AVI`);
+      throw new Error('Formato de archivo no válido');
+    }
+
+    // Validar tamaño (máximo 50MB)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      alert(`El archivo es demasiado grande (${(file.size / 1024 / 1024).toFixed(1)}MB).\n\nTamaño máximo: 50MB`);
+      throw new Error('Archivo demasiado grande');
+    }
+
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'ml_default'); // Preset genérico
+    formData.append('upload_preset', 'potfolio-sergio');
 
-    // Usamos el servicio de Cloudinary (gratuito)
-    const cloudName = 'demo';
+    // Usamos tu cuenta de Cloudinary
+    const cloudName = 'drw6eyore';
     const resourceType = file.type.startsWith('video') ? 'video' : 'image';
 
     try {
@@ -136,17 +153,26 @@ const App = () => {
           body: formData,
         }
       );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData.error?.message || 'Error en la subida';
+        console.error('Cloudinary error response:', errorData);
+        alert(`Error de Cloudinary: ${errorMsg}\n\nNOTA: La cuenta 'demo' tiene limitaciones. Para uso permanente, crea tu propia cuenta en cloudinary.com y actualiza el cloudName en App.jsx línea 145.`);
+        throw new Error(errorMsg);
+      }
+
       const data = await response.json();
       if (data.secure_url) {
         return data.secure_url;
       } else {
-        const errorMsg = data.error?.message || 'Fallo en la subida a la nube';
-        alert("Error de Cloudinary: " + errorMsg);
-        throw new Error(errorMsg);
+        throw new Error('No se recibió URL de la imagen');
       }
     } catch (error) {
       console.error('Error Cloudinary:', error);
-      alert("Error de red o configuración: " + error.message);
+      if (!error.message.includes('Formato') && !error.message.includes('grande') && !error.message.includes('Cloudinary')) {
+        alert("Error de red. Verifica tu conexión a internet.");
+      }
       throw error;
     }
   };
@@ -176,7 +202,7 @@ const App = () => {
             SERGIO MARTINEZ
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium tracking-wide items-center">
-            {['Experiencia', 'Habilidades', 'Educación', 'Galería', 'Contacto'].map((item) => (
+            {['Experiencia', 'Habilidades', 'Educación', 'Contacto'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
@@ -399,8 +425,8 @@ const App = () => {
           </div>
         </div>
       </section>
-
-      {/* Sección de Galería (Media) */}
+{/* 
+      Sección de Galería (Media)
       <section id="galeria" className="py-24 relative z-10 bg-slate-950">
         <div className="container mx-auto px-6">
           <div className="flex items-center gap-3 mb-16">
@@ -453,7 +479,7 @@ const App = () => {
             )}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Sección de Educación */}
       <section id="educacion" className="py-24 bg-slate-900/30 border-y border-slate-800">
@@ -601,7 +627,7 @@ const ProfileImage = ({ url, isEditing, onSave, onUpload }) => {
   const handleEdit = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/gif,image/webp';
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -611,7 +637,7 @@ const ProfileImage = ({ url, isEditing, onSave, onUpload }) => {
           onSave(downloadURL);
         } catch (error) {
           console.error("Upload failed", error);
-          alert("Error al subir la imagen");
+          // El error ya fue mostrado en uploadFile
         } finally {
           setUploading(false);
         }
@@ -631,18 +657,23 @@ const ProfileImage = ({ url, isEditing, onSave, onUpload }) => {
       <div className="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
 
       {isEditing && (
-        <button
-          onClick={handleEdit}
-          disabled={uploading}
-          className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
-          title="Cambiar Foto de Perfil"
-        >
-          {uploading ? (
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <ImageIcon size={32} className="text-white" />
-          )}
-        </button>
+        <>
+          <button
+            onClick={handleEdit}
+            disabled={uploading}
+            className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
+            title="Cambiar Foto de Perfil"
+          >
+            {uploading ? (
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <ImageIcon size={32} className="text-white mb-2" />
+                <span className="text-xs text-white/80">JPG, PNG, GIF, WebP</span>
+              </>
+            )}
+          </button>
+        </>
       )}
     </div>
   );
@@ -720,7 +751,7 @@ const MediaItem = ({ item, isEditing, onDelete, onUpdate, onUpload }) => {
   const handleUploadClick = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*,video/*';
+    input.accept = 'image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime';
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -732,7 +763,7 @@ const MediaItem = ({ item, isEditing, onDelete, onUpdate, onUpload }) => {
           onUpdate('type', type);
         } catch (error) {
           console.error("Upload failed", error);
-          alert("Error al subir el archivo");
+          // El error ya fue mostrado en uploadFile
         } finally {
           setUploading(false);
         }
@@ -775,15 +806,21 @@ const MediaItem = ({ item, isEditing, onDelete, onUpdate, onUpload }) => {
           <button
             onClick={onDelete}
             className="absolute top-4 right-4 bg-red-500 p-2 rounded-full hover:bg-red-600 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Eliminar"
           >
             <Trash2 size={16} />
           </button>
           <button
             onClick={handleUploadClick}
-            className="absolute top-4 left-4 bg-blue-600 p-2 rounded-full hover:bg-blue-500 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Subir Archivo"
+            disabled={uploading}
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
+            title="Subir imagen o video"
           >
-            <Camera size={16} />
+            <ImageIcon size={32} className="text-white" />
+            <span className="text-xs text-white/80 px-4 text-center">
+              Imágenes: JPG, PNG, GIF, WebP<br />
+              Videos: MP4, WebM, MOV
+            </span>
           </button>
         </>
       )}

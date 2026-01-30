@@ -25,10 +25,10 @@
   button,
   .pointer-events-none,
   .fixed.inset-0,
-  #galeria,
+  /* #galeria, */
   .ProfileImage,
   #contacto .grid>a,
-  .perspective-1000 {
+  .perspective-1000 */ {
     display: none !important;
   }
 
