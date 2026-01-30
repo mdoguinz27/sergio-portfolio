@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X } from 'lucide-react';
-import { auth, googleProvider, db, storage } from './firebase';
+import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+// Eliminamos Firebase Storage por restricciones de facturación
 
 const App = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -118,24 +118,33 @@ const App = () => {
     }
   };
 
-  const uploadFile = (file, path) => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'ml_default'); // Preset genérico
 
-      uploadTask.on('state_changed',
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log('Upload is ' + progress + '% done');
-        },
-        (error) => reject(error),
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
-          });
+    // Usamos el servicio de Cloudinary (gratuito)
+    const cloudName = 'demo';
+    const resourceType = file.type.startsWith('video') ? 'video' : 'image';
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`,
+        {
+          method: 'POST',
+          body: formData,
         }
       );
-    });
+      const data = await response.json();
+      if (data.secure_url) {
+        return data.secure_url;
+      } else {
+        throw new Error(data.error?.message || 'Error al subir');
+      }
+    } catch (error) {
+      console.error('Error Cloudinary:', error);
+      throw error;
+    }
   };
 
   const scrollTo = (id) => {
