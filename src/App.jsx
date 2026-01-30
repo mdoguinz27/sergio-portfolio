@@ -99,10 +99,6 @@ const App = () => {
   };
 
   const login = async () => {
-    if (import.meta.env.VITE_FIREBASE_API_KEY === "TU_API_KEY" || !auth.config?.apiKey || auth.config?.apiKey === "TU_API_KEY") {
-      alert("Configuración Requerida: Para usar el modo Admin, primero debes configurar tus propias claves de Firebase en src/firebase.js");
-      return;
-    }
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
