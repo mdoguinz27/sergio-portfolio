@@ -78,13 +78,12 @@ const App = () => {
               >
                 <Mail size={18} /> Contáctame
               </button>
-              <a
-                href="/cv-sergio-martinez.pdf"
-                download
+              <button
+                onClick={() => window.print()}
                 className="px-8 py-3 bg-transparent border border-slate-700 hover:border-slate-500 text-slate-300 font-bold rounded-full transition-all flex items-center gap-2"
               >
-                <FileDown size={18} /> Descargar CV (PDF)
-              </a>
+                <FileDown size={18} /> Generar CV (PDF)
+              </button>
             </div>
 
             <div className="flex items-center gap-6 pt-8 text-slate-500">
