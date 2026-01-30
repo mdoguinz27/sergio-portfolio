@@ -3,12 +3,13 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
-    appId: "TU_APP_ID"
+  apiKey: "AIzaSyCZH6wy0loU0t0GaCpI9k4oZ1a3IxrC7ho",
+  authDomain: "sergio-portfolio-9c74d.firebaseapp.com",
+  projectId: "sergio-portfolio-9c74d",
+  storageBucket: "sergio-portfolio-9c74d.firebasestorage.app",
+  messagingSenderId: "476535920332",
+  appId: "1:476535920332:web:b970c8b65277252bafd469",
+  measurementId: "G-D4YFKCDGWM"
 };
 
 const app = initializeApp(firebaseConfig);
