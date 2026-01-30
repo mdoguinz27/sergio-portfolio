@@ -4,91 +4,146 @@
 
 @media print {
   @page {
-    margin: 1.5cm;
+    margin: 1cm 1.5cm;
     size: A4;
   }
 
   body {
     background: white !important;
     color: black !important;
+    font-size: 11pt;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  /* Hide elements not needed in PDF */
+  /* Hide everything except content */
   nav,
+  footer,
   .animate-pulse,
   .animate-bounce,
   .animate-spin,
   button,
   .pointer-events-none,
   .fixed.inset-0,
-  #contacto .grid>a {
+  #galeria,
+  .ProfileImage,
+  #contacto .grid>a,
+  .perspective-1000 {
     display: none !important;
   }
 
-  /* Reset layout for print */
+  /* Reset layout for white background */
   .bg-slate-950,
   .bg-slate-900,
   .bg-slate-900\/50,
   .bg-slate-900\/30 {
-    background: white !important;
-    background-color: white !important;
+    background: transparent !important;
   }
 
-  .text-slate-400,
-  .text-slate-500,
-  .text-slate-300,
-  .text-slate-100 {
-    color: #333 !important;
+  /* Text colors for printing */
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  span,
+  div {
+    color: black !important;
+    text-shadow: none !important;
   }
 
   .text-blue-500,
   .text-blue-400,
   .text-cyan-300,
   .text-transparent {
-    color: #000 !important;
+    color: black !important;
+    -webkit-text-fill-color: black !important;
     background: none !important;
-    -webkit-text-fill-color: #000 !important;
   }
 
-  .border-slate-800,
-  .border-slate-700 {
-    border-color: #ccc !important;
-  }
-
+  /* Structural adjustments */
   .container {
     max-width: 100% !important;
     width: 100% !important;
     padding: 0 !important;
-  }
-
-  header {
-    min-height: auto !important;
-    padding-top: 0 !important;
-    margin-bottom: 2rem;
+    margin: 0 !important;
   }
 
   section {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
+    padding: 0 !important;
+    margin-bottom: 1.5rem !important;
+    page-break-inside: avoid;
   }
 
-  .grid {
+  h1 {
+    font-size: 28pt !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  h2 {
+    font-size: 16pt !important;
+    border-bottom: 1.5pt solid black !important;
+    padding-bottom: 0.2rem !important;
+    margin-bottom: 1rem !important;
+    margin-top: 1.5rem !important;
+  }
+
+  h3 {
+    font-size: 13pt !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  /* Hero adjustments */
+  #home {
     display: block !important;
+    min-height: auto !important;
+    padding: 0 !important;
   }
 
-  .flex {
-    display: flex !important;
+  #home .flex-col {
+    width: 100% !important;
   }
 
-  /* Ensure profile image is visible */
-  .ProfileImage img {
-    filter: grayscale(1);
-    border: 1px solid #ccc;
+  /* Experience list */
+  #experiencia .border-l-2 {
+    border-left: none !important;
+    margin-left: 0 !important;
   }
 
+  #experiencia .pl-8 {
+    padding-left: 0 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  #experiencia .absolute.left-\[-9px\] {
+    display: none !important;
+  }
+
+  /* Skills grid */
+  #habilidades .grid {
+    display: grid !important;
+    grid-template-cols: repeat(2, 1fr) !important;
+    gap: 1rem !important;
+  }
+
+  #habilidades .p-6 {
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  #habilidades .w-12 {
+    display: none !important;
+  }
+
+  /* Contact section */
   #contacto {
-    page-break-before: always;
+    margin-top: 2rem !important;
+    border-top: 0.5pt solid #eee;
+    padding-top: 1rem !important;
+  }
+
+  #contacto .grid {
+    display: grid !important;
+    grid-template-cols: repeat(2, 1fr) !important;
   }
 }
