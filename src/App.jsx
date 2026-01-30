@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay } from 'lucide-react';
+import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown } from 'lucide-react';
 
 const App = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -78,12 +78,13 @@ const App = () => {
               >
                 <Mail size={18} /> Contáctame
               </button>
-              <button
-                onClick={() => scrollTo('experiencia')}
+              <a
+                href="/cv-sergio-martinez.pdf"
+                download
                 className="px-8 py-3 bg-transparent border border-slate-700 hover:border-slate-500 text-slate-300 font-bold rounded-full transition-all flex items-center gap-2"
               >
-                <Film size={18} /> Ver Reel / CV
-              </button>
+                <FileDown size={18} /> Descargar CV (PDF)
+              </a>
             </div>
 
             <div className="flex items-center gap-6 pt-8 text-slate-500">
@@ -129,14 +130,14 @@ const App = () => {
               role="Camarógrafo (Freelance)"
               company="Gimbal Producciones"
               location="Argentina"
-              period="Actualidad"
+              period="Actualmente"
               description="Llevar a cabo tomas para programas de YouTube, asistir al talento, posicionamiento de luces y movimientos de cámara. Grabación con cámaras Sony XDCAM-EX 4K."
             />
             <TimelineItem
               role="Camarógrafo (Freelance)"
               company="A+V Eventos"
               location="Argentina"
-              period="Proyectos Varios"
+              period="Actualmente"
               description="Vivo para redes o grabación, manejo de equipos de video HD/4K. Balance de cámaras, ejecución de planos, composición, encuadres, traveling y montaje técnico."
             />
             <TimelineItem
