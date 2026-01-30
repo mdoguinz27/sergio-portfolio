@@ -93,6 +93,7 @@ const App = () => {
         await setDoc(doc(db, "portfolio", "sergio"), newData);
       } catch (error) {
         console.error("Firestore Save Error:", error);
+        alert("Eror al guardar cambios en la base de datos: " + error.message);
       }
     }
   };
@@ -139,10 +140,13 @@ const App = () => {
       if (data.secure_url) {
         return data.secure_url;
       } else {
-        throw new Error(data.error?.message || 'Error al subir');
+        const errorMsg = data.error?.message || 'Fallo en la subida a la nube';
+        alert("Error de Cloudinary: " + errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (error) {
       console.error('Error Cloudinary:', error);
+      alert("Error de red o configuración: " + error.message);
       throw error;
     }
   };
@@ -169,7 +173,7 @@ const App = () => {
         <div className="container mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">
             <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-slate-500'}`}></div>
-            SERGIO MARTINEZ <span className="text-blue-500">.TV</span>
+            SERGIO MARTINEZ
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium tracking-wide items-center">
             {['Experiencia', 'Habilidades', 'Educación', 'Galería', 'Contacto'].map((item) => (
@@ -528,7 +532,7 @@ const App = () => {
           <div className="inline-block p-3 rounded-full bg-blue-500/10 mb-6">
             <Mail className="text-blue-400" size={32} />
           </div>
-          <h2 className="text-4xl md:text-5xl font-black mb-8">¿LISTO PARA RODAR?</h2>
+          <h2 className="text-4xl md:text-5xl font-black mb-8">¿LISTO PARA GRABAR?</h2>
           <p className="text-slate-400 text-lg mb-12">
             Disponible para proyectos freelance, eventos y producciones de TV en CABA y alrededores.
           </p>
