@@ -19,11 +19,11 @@ const App = () => {
       profileImage: "sergio.jpg"
     },
     experience: [
-      { role: "Camarógrafo (Freelance)", company: "Gimbal Producciones", location: "Argentina", period: "Actualmente", description: "Llevar a cabo tomas para programa de youtube,asistir al talento ,su posicion de luz y movimientos a realizar con la cámara.grabación con cámaras sony xdcam-ex 4k" },
-      { role: "Camarógrafo (Freelance)", company: "A+V Eventos", location: "Argentina", period: "Actualmente", description: "Vivo para redes o grabación, manejo de los equipos de video con definicion hd o 4k. balance de cámaras,ejecutar planos de acuerdo a la ocasión,composicion y encuadres ,traveling y todo lo necesario para concretar la grabacion." },
-      { role: "Camarógrafo de Estudio y Exteriores", company: "Televen", location: "Venezuela", period: "2012 - 2018", description: "Encargado de manejar la cámara y captar imágenes haciendo movimientos o planos fijos,Ubicar a los Talentos en posicion de luz,estratégica para la composicion del plano..." },
-      { role: "Camarógrafo", company: "Venevisión", location: "Venezuela", period: "2008 - 2012", description: "Titular de estudio de television como variedades y dramaticos..." },
-      { role: "Camarógrafo", company: "RCTV", location: "Venezuela", period: "2007 - 2008", description: "Ejecutar planos acorde a lo solicitado por el director..." }
+      { role: "Camarógrafo (Freelance)", company: "Gimbal Producciones", location: "Argentina", period: "Actualmente", description: " Llevar a cabo tomas para programa de youtube,asistir al talento ,su posicion de luz y movimientos a realizar con la cámara.grabación con cámaras sony xdcam-ex 4k." },
+      { role: "Camarógrafo (Freelance)", company: "A+V Eventos", location: "Argentina", period: "Actualmente", description: " Vivo para redes o grabación, manejo de los equipos de video con definicion hd o 4k. balance de cámaras,ejecutar planos de acuerdo a la ocasión,composicion y encuadres ,traveling y todo lo necesario para concretar la grabacion." },
+      { role: "Camarógrafo de Estudio y Exteriores", company: "Televen", location: "Venezuela", period: "2012 - 2018", description: "Encargado de manejar la cámara y captar imágenes haciendo movimientos o planos fijos,Ubicar a los Talentos en posicion de luz,estratégica para la composicion del plano.Utilizacion de auriculares para recibir instruciones del Director encargado y central de video. Colocar las Cámaras en posicion para balance de blancos. Ejecutar movimientos travelling,dolly in, dolly out,panning,tilt up,tilt down con o sin tripode de manera creativa siempre y cuando exista un plano justificado. Coordinar de manera efectiva con los asistentes de cámaras los movimientos a realizar." },
+      { role: "Camarógrafo", company: "Venevisión", location: "Venezuela", period: "2008 - 2012", description: "Titular de estudio de television como variedades y dramaticos,como Portadas, A que te ries, Que locura, programas de entrenimiento. Captar imagenes de momentos, en la grabaciones o señal en vivo. siguiendo las ordenes del Director,Manejo de planos,composicion y encuadre. Experiencia en Cámaras con tripode y portatil." },
+      { role: "Camarógrafo", company: "RCTV", location: "Venezuela", period: "2007 - 2008", description: " Ejecutar planos acorde a lo solicitado por el director, movimientos y planos secuencias. ubicar al periodista en la luz indicada." }
     ],
     education: [
       { title: "Técnico Superior Universitario Audiovisuales", school: "Cecilio Acosta", location: "Venezuela" },
@@ -97,10 +97,15 @@ const App = () => {
   };
 
   const login = async () => {
+    if (import.meta.env.VITE_FIREBASE_API_KEY === "TU_API_KEY" || !auth.config?.apiKey || auth.config?.apiKey === "TU_API_KEY") {
+      alert("Configuración Requerida: Para usar el modo Admin, primero debes configurar tus propias claves de Firebase en src/firebase.js");
+      return;
+    }
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Login Error:", error);
+      alert("Error de Conexión: Verifica tu configuración de Firebase.");
     }
   };
 
@@ -159,11 +164,21 @@ const App = () => {
             )}
 
             {user ? (
-              <button onClick={logout} className="text-slate-500 hover:text-white transition-colors" title="Cerrar Sesión">
+              <button
+                onClick={logout}
+                className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors group"
+                title="Cerrar Sesión"
+              >
+                <span className="text-[10px] font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">LOGOUT</span>
                 <LogOut size={18} />
               </button>
             ) : (
-              <button onClick={login} className="text-slate-500 hover:text-white transition-colors" title="Acceso Admin">
+              <button
+                onClick={login}
+                className="flex items-center gap-2 text-slate-500 hover:text-blue-400 transition-colors group"
+                title="Acceso Admin"
+              >
+                <span className="text-[10px] font-bold tracking-widest">ADMIN</span>
                 <LogIn size={18} />
               </button>
             )}
