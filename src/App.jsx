@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X } from 'lucide-react';
-import { auth, googleProvider, db } from './firebase';
+import { auth, googleProvider, db, storage } from './firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const App = () => {
   const [activeSection, setActiveSection] = useState('home');
@@ -115,6 +116,26 @@ const App = () => {
     } catch (error) {
       console.error("Logout Error:", error);
     }
+  };
+
+  const uploadFile = (file, path) => {
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Upload is ' + progress + '% done');
+        },
+        (error) => reject(error),
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            resolve(downloadURL);
+          });
+        }
+      );
+    });
   };
 
   const scrollTo = (id) => {
@@ -253,6 +274,7 @@ const App = () => {
                   url={cvData.hero.profileImage}
                   isEditing={isEditing}
                   onSave={(newUrl) => updateData('hero.profileImage', newUrl)}
+                  onUpload={uploadFile}
                 />
 
               </div>
@@ -386,53 +408,22 @@ const App = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {cvData.media && cvData.media.map((item, index) => (
-              <div key={index} className="relative group overflow-hidden rounded-2xl aspect-video bg-slate-900 border border-slate-800">
-                {item.type === 'video' ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900 text-slate-500">
-                    <Film size={32} />
-                  </div>
-                ) : (
-                  <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
-                )}
-
-                {isEditing && (
-                  <button
-                    onClick={() => {
-                      const newMedia = [...cvData.media];
-                      newMedia.splice(index, 1);
-                      updateData('media', newMedia);
-                    }}
-                    className="absolute top-4 right-4 bg-red-500 p-2 rounded-full hover:bg-red-600 z-20"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 to-transparent">
-                  <EditableText
-                    text={item.title}
-                    isEditing={isEditing}
-                    onSave={(val) => {
-                      const newMedia = [...cvData.media];
-                      newMedia[index].title = val;
-                      updateData('media', newMedia);
-                    }}
-                    className="text-sm font-bold block"
-                  />
-                  {isEditing && (
-                    <EditableText
-                      text={item.url || "Pegar URL aquí"}
-                      isEditing={isEditing}
-                      onSave={(val) => {
-                        const newMedia = [...cvData.media];
-                        newMedia[index].url = val;
-                        updateData('media', newMedia);
-                      }}
-                      className="text-[10px] text-slate-500 block truncate"
-                    />
-                  )}
-                </div>
-              </div>
+              <MediaItem
+                key={index}
+                item={item}
+                isEditing={isEditing}
+                onDelete={() => {
+                  const newMedia = [...cvData.media];
+                  newMedia.splice(index, 1);
+                  updateData('media', newMedia);
+                }}
+                onUpdate={(field, val) => {
+                  const newMedia = [...cvData.media];
+                  newMedia[index][field] = val;
+                  updateData('media', newMedia);
+                }}
+                onUpload={uploadFile}
+              />
             ))}
 
             {isEditing && (
@@ -577,9 +568,10 @@ const EditableText = ({ tag: Tag = 'span', text, onSave, isEditing, className = 
   return <Tag className={className}>{text}</Tag>;
 };
 
-const ProfileImage = ({ url, isEditing, onSave }) => {
+const ProfileImage = ({ url, isEditing, onSave, onUpload }) => {
   const [imgSrc, setImgSrc] = useState(url || 'sergio.jpg');
   const [hasError, setHasError] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     setImgSrc(url || 'sergio.jpg');
@@ -594,10 +586,25 @@ const ProfileImage = ({ url, isEditing, onSave }) => {
   };
 
   const handleEdit = () => {
-    const newUrl = prompt("Ingresa la URL de la nueva imagen de perfil:", imgSrc);
-    if (newUrl !== null && newUrl !== "") {
-      onSave(newUrl);
-    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        setUploading(true);
+        try {
+          const downloadURL = await onUpload(file, 'profile');
+          onSave(downloadURL);
+        } catch (error) {
+          console.error("Upload failed", error);
+          alert("Error al subir la imagen");
+        } finally {
+          setUploading(false);
+        }
+      }
+    };
+    input.click();
   };
 
   return (
@@ -606,17 +613,22 @@ const ProfileImage = ({ url, isEditing, onSave }) => {
         src={imgSrc}
         alt="Sergio Martinez"
         onError={handleError}
-        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+        className={`w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity ${uploading ? 'animate-pulse blur-sm' : ''}`}
       />
       <div className="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
 
       {isEditing && (
         <button
           onClick={handleEdit}
+          disabled={uploading}
           className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
           title="Cambiar Foto de Perfil"
         >
-          <ImageIcon size={32} className="text-white" />
+          {uploading ? (
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <ImageIcon size={32} className="text-white" />
+          )}
         </button>
       )}
     </div>
@@ -688,5 +700,102 @@ const SkillCard = ({ title, desc, isEditing, onSave }) => (
     />
   </div>
 );
+
+const MediaItem = ({ item, isEditing, onDelete, onUpdate, onUpload }) => {
+  const [uploading, setUploading] = useState(false);
+
+  const handleUploadClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*,video/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        setUploading(true);
+        try {
+          const type = file.type.startsWith('video') ? 'video' : 'image';
+          const downloadURL = await onUpload(file, 'media');
+          onUpdate('url', downloadURL);
+          onUpdate('type', type);
+        } catch (error) {
+          console.error("Upload failed", error);
+          alert("Error al subir el archivo");
+        } finally {
+          setUploading(false);
+        }
+      }
+    };
+    input.click();
+  };
+
+  return (
+    <div className="relative group overflow-hidden rounded-2xl aspect-video bg-slate-900 border border-slate-800">
+      {item.type === 'video' ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900 overflow-hidden">
+          {item.url ? (
+            <video src={item.url} className="w-full h-full object-cover" />
+          ) : (
+            <Video size={48} className="text-slate-700" />
+          )}
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+          {item.url ? (
+            <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon size={48} className="text-slate-700" />
+          )}
+        </div>
+      )}
+
+      {uploading && (
+        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-30">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-xs font-bold text-blue-400">SUBIENDO...</span>
+          </div>
+        </div>
+      )}
+
+      {isEditing && (
+        <>
+          <button
+            onClick={onDelete}
+            className="absolute top-4 right-4 bg-red-500 p-2 rounded-full hover:bg-red-600 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 size={16} />
+          </button>
+          <button
+            onClick={handleUploadClick}
+            className="absolute top-4 left-4 bg-blue-600 p-2 rounded-full hover:bg-blue-500 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+            title="Subir Archivo"
+          >
+            <Camera size={16} />
+          </button>
+        </>
+      )}
+
+      <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 to-transparent z-10">
+        <EditableText
+          text={item.title}
+          isEditing={isEditing}
+          onSave={(val) => onUpdate('title', val)}
+          className="text-sm font-bold block"
+        />
+        {isEditing && (
+          <div className="flex items-center gap-2 mt-1">
+            <EditableText
+              text={item.url || "O subir archivo..."}
+              isEditing={isEditing}
+              onSave={(val) => onUpdate('url', val)}
+              className="text-[10px] text-slate-500 block truncate flex-1"
+            />
+            <span className="text-[10px] uppercase font-bold text-slate-700">{item.type}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default App;
