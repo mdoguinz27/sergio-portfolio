@@ -1,18 +1,115 @@
-import React, { useState, useEffect } from 'react';
-import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown } from 'lucide-react';
+import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X } from 'lucide-react';
+import { auth, googleProvider, db } from './firebase';
+import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const App = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isRecording, setIsRecording] = useState(true);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [cvData, setCvData] = useState({
+    hero: {
+      titleLine1: "CAPTANDO",
+      titleLine2: "MOMENTOS",
+      description: "Especialista en cámaras HD/4K, movimientos de travelling y composición visual. Experiencia en TV en vivo, noticieros, videos musicales y streaming.",
+      profileImage: "sergio.jpg"
+    },
+    experience: [
+      { role: "Camarógrafo (Freelance)", company: "Gimbal Producciones", location: "Argentina", period: "Actualmente", description: "Llevar a cabo tomas para programa de youtube,asistir al talento ,su posicion de luz y movimientos a realizar con la cámara.grabación con cámaras sony xdcam-ex 4k" },
+      { role: "Camarógrafo (Freelance)", company: "A+V Eventos", location: "Argentina", period: "Actualmente", description: "Vivo para redes o grabación, manejo de los equipos de video con definicion hd o 4k. balance de cámaras,ejecutar planos de acuerdo a la ocasión,composicion y encuadres ,traveling y todo lo necesario para concretar la grabacion." },
+      { role: "Camarógrafo de Estudio y Exteriores", company: "Televen", location: "Venezuela", period: "2012 - 2018", description: "Encargado de manejar la cámara y captar imágenes haciendo movimientos o planos fijos,Ubicar a los Talentos en posicion de luz,estratégica para la composicion del plano..." },
+      { role: "Camarógrafo", company: "Venevisión", location: "Venezuela", period: "2008 - 2012", description: "Titular de estudio de television como variedades y dramaticos..." },
+      { role: "Camarógrafo", company: "RCTV", location: "Venezuela", period: "2007 - 2008", description: "Ejecutar planos acorde a lo solicitado por el director..." }
+    ],
+    education: [
+      { title: "Técnico Superior Universitario Audiovisuales", school: "Cecilio Acosta", location: "Venezuela" },
+      { title: "Bachiller en Ciencias", school: "Instituto Central de Educación", location: "Venezuela" }
+    ],
+    skills: [
+      { title: "Cámaras HD / 4K", desc: "Sony XDCAM, DSLR, Mirrorless" },
+      { title: "Movimientos de Cámara", desc: "Traveling, Dolly, Panning, Tilt" },
+      { title: "Composición e Iluminación", desc: "Encuadres, planos fijos, lógica de luz" },
+      { title: "Equipamiento", desc: "Manejo de Porta-Jib, Trípodes, Gimbal" },
+      { title: "Formatos", desc: "Noticieros, Videos Musicales, Streaming" },
+      { title: "Trabajo en Equipo", desc: "Coordinación con directores y asistentes" }
+    ],
+    media: []
+  });
+
+  // Lista de correos con acceso admin
+  const adminEmails = ['sergiomartinez2055@gmail.com', 'mdoguinz@gmail.com'];
 
   useEffect(() => {
+    // Escuchar cambios en Firestore
+    const docRef = doc(db, "portfolio", "sergio");
+    const unsubFirestore = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setCvData(docSnap.data());
+      }
+    });
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Auth Listener
+    const unsubAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser && adminEmails.includes(currentUser.email)) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+        setIsEditing(false);
+      }
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      unsubAuth();
+      unsubFirestore();
+    };
   }, []);
+
+  const updateData = async (path, value) => {
+    const newData = { ...cvData };
+    const keys = path.split('.');
+    let current = newData;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+
+    setCvData(newData);
+
+    // Guardar en Firestore si es admin
+    if (isAdmin) {
+      try {
+        await setDoc(doc(db, "portfolio", "sergio"), newData);
+      } catch (error) {
+        console.error("Firestore Save Error:", error);
+      }
+    }
+  };
+
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login Error:", error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
 
   const scrollTo = (id) => {
     const element = document.getElementById(id);
@@ -38,8 +135,8 @@ const App = () => {
             <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-slate-500'}`}></div>
             SERGIO MARTINEZ <span className="text-blue-500">.TV</span>
           </div>
-          <div className="hidden md:flex gap-8 text-sm font-medium tracking-wide">
-            {['Experiencia', 'Habilidades', 'Educación', 'Contacto'].map((item) => (
+          <div className="hidden md:flex gap-8 text-sm font-medium tracking-wide items-center">
+            {['Experiencia', 'Habilidades', 'Educación', 'Galería', 'Contacto'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
@@ -48,6 +145,27 @@ const App = () => {
                 {item}
               </button>
             ))}
+
+            {/* Admin Controls */}
+            {isAdmin && (
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${isEditing ? 'bg-red-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
+              >
+                {isEditing ? <X size={14} /> : <Plus size={14} />}
+                {isEditing ? 'DETENER EDICIÓN' : 'MODO EDICIÓN'}
+              </button>
+            )}
+
+            {user ? (
+              <button onClick={logout} className="text-slate-500 hover:text-white transition-colors" title="Cerrar Sesión">
+                <LogOut size={18} />
+              </button>
+            ) : (
+              <button onClick={login} className="text-slate-500 hover:text-white transition-colors" title="Acceso Admin">
+                <LogIn size={18} />
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -61,14 +179,26 @@ const App = () => {
               Camarógrafo Profesional
             </div>
             <h1 className="text-5xl md:text-7xl font-black leading-tight">
-              CAPTANDO <br />
+              <EditableText
+                text={cvData.hero.titleLine1}
+                onSave={(val) => updateData('hero.titleLine1', val)}
+                isEditing={isEditing}
+              /> <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-                MOMENTOS
+                <EditableText
+                  text={cvData.hero.titleLine2}
+                  onSave={(val) => updateData('hero.titleLine2', val)}
+                  isEditing={isEditing}
+                />
               </span>
             </h1>
             <p className="text-lg text-slate-400 max-w-lg leading-relaxed">
-              Especialista en cámaras HD/4K, movimientos de travelling y composición visual.
-              Experiencia en TV en vivo, noticieros, videos musicales y streaming.
+              <EditableText
+                tag="span"
+                text={cvData.hero.description}
+                onSave={(val) => updateData('hero.description', val)}
+                isEditing={isEditing}
+              />
             </p>
 
             <div className="flex flex-wrap gap-4 pt-4">
@@ -103,8 +233,11 @@ const App = () => {
                 <div className="absolute inset-0 border border-slate-700 rounded-full scale-110 opacity-50"></div>
                 <div className="absolute inset-0 border border-slate-700 rounded-full scale-125 opacity-20 border-dashed animate-[spin_10s_linear_infinite]"></div>
 
-                {/* Imagen de Perfil con manejo de errores */}
-                <ProfileImage />
+                <ProfileImage
+                  url={cvData.hero.profileImage}
+                  isEditing={isEditing}
+                  onSave={(newUrl) => updateData('hero.profileImage', newUrl)}
+                />
 
               </div>
             </div>
@@ -125,41 +258,43 @@ const App = () => {
           </div>
 
           <div className="relative border-l-2 border-slate-800 ml-4 md:ml-6 space-y-12">
-            <TimelineItem
-              role="Camarógrafo (Freelance)"
-              company="Gimbal Producciones"
-              location="Argentina"
-              period="Actualmente"
-              description="Llevar a cabo tomas para programas de YouTube, asistir al talento, posicionamiento de luces y movimientos de cámara. Grabación con cámaras Sony XDCAM-EX 4K."
-            />
-            <TimelineItem
-              role="Camarógrafo (Freelance)"
-              company="A+V Eventos"
-              location="Argentina"
-              period="Actualmente"
-              description="Vivo para redes o grabación, manejo de equipos de video HD/4K. Balance de cámaras, ejecución de planos, composición, encuadres, traveling y montaje técnico."
-            />
-            <TimelineItem
-              role="Camarógrafo de Estudio y Exteriores"
-              company="Televen"
-              location="Venezuela"
-              period="2012 - 2018"
-              description="Encargado de manejar la cámara y captar imágenes. Movimientos o planos fijos. Ubicación de talentos e iluminación estratégica. Uso de Dolly In/Out, Panning, Tilt Up/Down."
-            />
-            <TimelineItem
-              role="Camarógrafo"
-              company="Venevisión"
-              location="Venezuela"
-              period="2008 - 2012"
-              description="Titular de estudio de televisión en variedades y dramáticos. Captura de momentos en grabaciones o señal en vivo siguiendo órdenes del Director."
-            />
-            <TimelineItem
-              role="Camarógrafo"
-              company="RCTV"
-              location="Venezuela"
-              period="2007 - 2008"
-              description="Ejecutar planos acorde a lo solicitado por el director. Movimientos y planos secuencias."
-            />
+            {cvData.experience.map((item, index) => (
+              <div key={index} className="relative group">
+                {isEditing && (
+                  <button
+                    onClick={() => {
+                      const newExp = [...cvData.experience];
+                      newExp.splice(index, 1);
+                      updateData('experience', newExp);
+                    }}
+                    className="absolute -left-12 top-0 text-red-500 hover:text-red-400 p-2"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+                <TimelineItem
+                  {...item}
+                  isEditing={isEditing}
+                  onSave={(field, val) => {
+                    const newExp = [...cvData.experience];
+                    newExp[index][field] = val;
+                    updateData('experience', newExp);
+                  }}
+                />
+              </div>
+            ))}
+
+            {isEditing && (
+              <button
+                onClick={() => {
+                  const newExp = [...cvData.experience, { role: "Nuevo Rol", company: "Compañía", location: "Ubicación", period: "Periodo", description: "Descripción..." }];
+                  updateData('experience', newExp);
+                }}
+                className="ml-8 px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-500 transition-all"
+              >
+                <Plus size={16} /> AÑADIR EXPERIENCIA
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -173,12 +308,129 @@ const App = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <SkillCard icon={<Video />} title="Cámaras HD / 4K" desc="Sony XDCAM, DSLR, Mirrorless" />
-            <SkillCard icon={<MonitorPlay />} title="Movimientos de Cámara" desc="Traveling, Dolly, Panning, Tilt" />
-            <SkillCard icon={<Clapperboard />} title="Composición e Iluminación" desc="Encuadres, planos fijos, lógica de luz" />
-            <SkillCard icon={<Film />} title="Equipamiento" desc="Manejo de Porta-Jib, Trípodes, Gimbal" />
-            <SkillCard icon={<Play />} title="Formatos" desc="Noticieros, Videos Musicales, Streaming" />
-            <SkillCard icon={<Award />} title="Trabajo en Equipo" desc="Coordinación con directores y asistentes" />
+            {cvData.skills.map((skill, index) => (
+              <div key={index} className="relative group">
+                {isEditing && (
+                  <button
+                    onClick={() => {
+                      const newSkills = [...cvData.skills];
+                      newSkills.splice(index, 1);
+                      updateData('skills', newSkills);
+                    }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full z-20 hover:bg-red-600"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+                <SkillCard
+                  {...skill}
+                  isEditing={isEditing}
+                  onSave={(field, val) => {
+                    const newSkills = [...cvData.skills];
+                    newSkills[index][field] = val;
+                    updateData('skills', newSkills);
+                  }}
+                />
+              </div>
+            ))}
+            {isEditing && (
+              <button
+                onClick={() => {
+                  const newSkills = [...cvData.skills, { title: "Nueva Habilidad", desc: "Descripción..." }];
+                  updateData('skills', newSkills);
+                }}
+                className="p-6 border-2 border-dashed border-slate-800 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:border-blue-500 hover:text-blue-500 transition-all"
+              >
+                <Plus size={32} />
+                <span className="mt-2 font-bold">AÑADIR HABILIDAD</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Sección de Galería (Media) */}
+      <section id="galeria" className="py-24 relative z-10 bg-slate-950">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center gap-3 mb-16">
+            <div className="h-px bg-cyan-500 w-12"></div>
+            <h2 className="text-3xl font-bold tracking-tight uppercase">Galería de Trabajo</h2>
+            {isEditing && (
+              <button
+                onClick={() => {
+                  const newMedia = [...(cvData.media || []), { title: "Nuevo Item", url: "", type: "image" }];
+                  updateData('media', newMedia);
+                }}
+                className="bg-blue-600 p-2 rounded-full hover:bg-blue-500 ml-4 transition-all"
+              >
+                <Plus size={20} />
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {cvData.media && cvData.media.map((item, index) => (
+              <div key={index} className="relative group overflow-hidden rounded-2xl aspect-video bg-slate-900 border border-slate-800">
+                {item.type === 'video' ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-900 text-slate-500">
+                    <Film size={32} />
+                  </div>
+                ) : (
+                  <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+                )}
+
+                {isEditing && (
+                  <button
+                    onClick={() => {
+                      const newMedia = [...cvData.media];
+                      newMedia.splice(index, 1);
+                      updateData('media', newMedia);
+                    }}
+                    className="absolute top-4 right-4 bg-red-500 p-2 rounded-full hover:bg-red-600 z-20"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 to-transparent">
+                  <EditableText
+                    text={item.title}
+                    isEditing={isEditing}
+                    onSave={(val) => {
+                      const newMedia = [...cvData.media];
+                      newMedia[index].title = val;
+                      updateData('media', newMedia);
+                    }}
+                    className="text-sm font-bold block"
+                  />
+                  {isEditing && (
+                    <EditableText
+                      text={item.url || "Pegar URL aquí"}
+                      isEditing={isEditing}
+                      onSave={(val) => {
+                        const newMedia = [...cvData.media];
+                        newMedia[index].url = val;
+                        updateData('media', newMedia);
+                      }}
+                      className="text-[10px] text-slate-500 block truncate"
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {isEditing && (
+              <button
+                onClick={() => {
+                  const newMedia = [...(cvData.media || []), { title: "Nuevo Item", url: "", type: "image" }];
+                  updateData('media', newMedia);
+                }}
+                className="border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-500 hover:border-cyan-500 hover:text-cyan-500 transition-all aspect-video"
+              >
+                <Plus size={32} />
+                <span className="mt-2 font-bold uppercase text-xs">Añadir Foto/Video</span>
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -188,17 +440,69 @@ const App = () => {
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold tracking-tight mb-12 text-center">FORMACIÓN ACADÉMICA</h2>
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 hover:border-blue-500/50 transition-colors">
-              <h3 className="text-xl font-bold text-blue-400 mb-2">Técnico Superior Universitario Audiovisuales</h3>
-              <p className="text-white font-medium">Cecilio Acosta</p>
-              <p className="text-slate-500 text-sm">Venezuela</p>
-            </div>
-            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 hover:border-blue-500/50 transition-colors">
-              <h3 className="text-xl font-bold text-blue-400 mb-2">Bachiller en Ciencias</h3>
-              <p className="text-white font-medium">Instituto Central de Educación</p>
-              <p className="text-slate-500 text-sm">Venezuela</p>
-            </div>
+            {cvData.education.map((edu, index) => (
+              <div key={index} className="bg-slate-900 p-8 rounded-2xl border border-slate-800 hover:border-blue-500/50 transition-colors relative group">
+                {isEditing && (
+                  <button
+                    onClick={() => {
+                      const newEdu = [...cvData.education];
+                      newEdu.splice(index, 1);
+                      updateData('education', newEdu);
+                    }}
+                    className="absolute top-4 right-4 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+                <EditableText
+                  tag="h3"
+                  text={edu.title}
+                  isEditing={isEditing}
+                  onSave={(val) => {
+                    const newEdu = [...cvData.education];
+                    newEdu[index].title = val;
+                    updateData('education', newEdu);
+                  }}
+                  className="text-xl font-bold text-blue-400 mb-2"
+                />
+                <EditableText
+                  tag="p"
+                  text={edu.school}
+                  isEditing={isEditing}
+                  onSave={(val) => {
+                    const newEdu = [...cvData.education];
+                    newEdu[index].school = val;
+                    updateData('education', newEdu);
+                  }}
+                  className="text-white font-medium"
+                />
+                <EditableText
+                  tag="p"
+                  text={edu.location}
+                  isEditing={isEditing}
+                  onSave={(val) => {
+                    const newEdu = [...cvData.education];
+                    newEdu[index].location = val;
+                    updateData('education', newEdu);
+                  }}
+                  className="text-slate-500 text-sm"
+                />
+              </div>
+            ))}
           </div>
+          {isEditing && (
+            <div className="flex justify-center mt-12">
+              <button
+                onClick={() => {
+                  const newEdu = [...cvData.education, { title: "Nuevo Título", school: "Institución", location: "Ubicación" }];
+                  updateData('education', newEdu);
+                }}
+                className="px-6 py-3 bg-blue-600 text-white rounded-full font-bold flex items-center gap-2 hover:bg-blue-500 transition-all"
+              >
+                <Plus size={20} /> AÑADIR EDUCACIÓN
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -241,15 +545,42 @@ const App = () => {
 
 // --- Sub-componentes ---
 
-const ProfileImage = () => {
-  // Asegúrate de que este archivo esté en la carpeta /public de tu proyecto local
-  const [imgSrc, setImgSrc] = useState('sergio.jpg');
+const EditableText = ({ tag: Tag = 'span', text, onSave, isEditing, className = "" }) => {
+  if (isEditing) {
+    return (
+      <Tag
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={(e) => onSave(e.target.innerText)}
+        className={`${className} border-b border-dashed border-blue-500 outline-none focus:border-solid focus:bg-blue-500/10 px-1`}
+      >
+        {text}
+      </Tag>
+    );
+  }
+  return <Tag className={className}>{text}</Tag>;
+};
+
+const ProfileImage = ({ url, isEditing, onSave }) => {
+  const [imgSrc, setImgSrc] = useState(url || 'sergio.jpg');
   const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setImgSrc(url || 'sergio.jpg');
+    setHasError(false);
+  }, [url]);
 
   const handleError = () => {
     if (!hasError) {
       setHasError(true);
       setImgSrc("https://via.placeholder.com/400x400/0f172a/3b82f6?text=Sergio+Martinez");
+    }
+  };
+
+  const handleEdit = () => {
+    const newUrl = prompt("Ingresa la URL de la nueva imagen de perfil:", imgSrc);
+    if (newUrl !== null && newUrl !== "") {
+      onSave(newUrl);
     }
   };
 
@@ -262,31 +593,83 @@ const ProfileImage = () => {
         className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
       />
       <div className="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
+
+      {isEditing && (
+        <button
+          onClick={handleEdit}
+          className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
+          title="Cambiar Foto de Perfil"
+        >
+          <ImageIcon size={32} className="text-white" />
+        </button>
+      )}
     </div>
   );
 };
 
-const TimelineItem = ({ role, company, location, period, description }) => (
+const TimelineItem = ({ role, company, location, period, description, isEditing, onSave }) => (
   <div className="relative pl-8 pb-12 last:pb-0 group">
     <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-600 group-hover:border-blue-500 group-hover:scale-125 transition-all duration-300 z-10"></div>
     <div className="flex flex-col md:flex-row md:items-baseline md:justify-between mb-2">
-      <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">{role}</h3>
-      <span className="text-sm font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded border border-slate-800">{period}</span>
+      <EditableText
+        tag="h3"
+        text={role}
+        isEditing={isEditing}
+        onSave={(val) => onSave('role', val)}
+        className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors"
+      />
+      <EditableText
+        tag="span"
+        text={period}
+        isEditing={isEditing}
+        onSave={(val) => onSave('period', val)}
+        className="text-sm font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded border border-slate-800"
+      />
     </div>
     <div className="text-blue-500 font-medium mb-3 flex items-center gap-2">
-      {company} <span className="text-slate-600">•</span> <span className="text-slate-400 text-sm font-normal">{location}</span>
+      <EditableText
+        text={company}
+        isEditing={isEditing}
+        onSave={(val) => onSave('company', val)}
+      />
+      <span className="text-slate-600">•</span>
+      <EditableText
+        tag="span"
+        text={location}
+        isEditing={isEditing}
+        onSave={(val) => onSave('location', val)}
+        className="text-slate-400 text-sm font-normal"
+      />
     </div>
-    <p className="text-slate-400 leading-relaxed max-w-2xl">{description}</p>
+    <EditableText
+      tag="p"
+      text={description}
+      isEditing={isEditing}
+      onSave={(val) => onSave('description', val)}
+      className="text-slate-400 leading-relaxed w-full"
+    />
   </div>
 );
 
-const SkillCard = ({ icon, title, desc }) => (
+const SkillCard = ({ title, desc, isEditing, onSave }) => (
   <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-blue-500/50 group transition-all duration-300 cursor-default">
     <div className="w-12 h-12 rounded-lg bg-slate-950 flex items-center justify-center text-blue-500 mb-4 group-hover:scale-110 transition-transform">
-      {icon}
+      <Clapperboard size={24} />
     </div>
-    <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-    <p className="text-slate-400 text-sm">{desc}</p>
+    <EditableText
+      tag="h3"
+      text={title}
+      isEditing={isEditing}
+      onSave={(val) => onSave('title', val)}
+      className="text-lg font-bold text-white mb-2 block"
+    />
+    <EditableText
+      tag="p"
+      text={desc}
+      isEditing={isEditing}
+      onSave={(val) => onSave('desc', val)}
+      className="text-slate-400 text-sm block"
+    />
   </div>
 );
 
