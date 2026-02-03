@@ -1,6 +1,6 @@
 # 🎥 Sergio Martínez | Portafolio Audiovisual
 
-![Sergio Martinez Portfolio Preview](file:///Users/mariagabrieladoguinz/.gemini/antigravity/brain/7709dff6-eeec-466f-bc7b-c21890a9224c/portfolio_hero_section_1770158705279.png)
+![Sergio Martinez Portfolio Preview](public/preview.png)
 
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
