@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X, Menu } from 'lucide-react';
 import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import EditableText from './components/EditableText';
 import ProfileImage from './components/ProfileImage';
 import TimelineItem from './components/TimelineItem';
@@ -11,9 +11,7 @@ import GallerySection from './components/GallerySection';
 // Eliminamos Firebase Storage por restricciones de facturación
 
 const App = () => {
-  const [activeSection, setActiveSection] = useState('home');
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isRecording, setIsRecording] = useState(true);
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -47,10 +45,10 @@ const App = () => {
     media: []
   });
 
-  // Lista de correos con acceso admin
-  const adminEmails = ['sergiomartinez2055@gmail.com', 'mdoguinz@gmail.com'];
 
   useEffect(() => {
+    // Lista de correos con acceso admin
+    const adminEmails = ['sergiomartinez2055@gmail.com', 'mdoguinz@gmail.com'];
     // Escuchar cambios en Firestore
     const docRef = doc(db, "portfolio", "sergio");
     const unsubFirestore = onSnapshot(docRef, (docSnap) => {
@@ -187,7 +185,6 @@ const App = () => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(id);
     }
   };
 
@@ -204,7 +201,7 @@ const App = () => {
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isMenuOpen ? 'bg-slate-950/80 backdrop-blur-md border-b border-slate-800' : 'bg-transparent'} ${isMenuOpen ? 'pb-4' : ''}`}>
         <div className="container mx-auto px-6 flex justify-between items-center py-4">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">
-            <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-slate-500'}`}></div>
+            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
             SERGIO MARTINEZ
           </div>
 

@@ -27,6 +27,7 @@ html {
 body {
   overflow-x: hidden;
 }
+
 @media print {
   @page {
     margin: 1cm 1.5cm;
@@ -52,8 +53,7 @@ body {
   .fixed.inset-0,
   /* #galeria, */
   .ProfileImage,
-  #contacto .grid>a,
-  .perspective-1000 */ {
+  #contacto .grid>a {
     display: none !important;
   }
 

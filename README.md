@@ -1,16 +1,59 @@
-# React + Vite
+# 🎥 Sergio Martínez | Portafolio Audiovisual
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Sergio Martinez Portfolio Preview](file:///Users/mariagabrieladoguinz/.gemini/antigravity/brain/7709dff6-eeec-466f-bc7b-c21890a9224c/portfolio_hero_section_1770158705279.png)
 
-Currently, two official plugins are available:
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Cloudinary](https://img.shields.io/badge/Cloudinary-Uploads-3448C5?logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Portafolio digital profesional de **Sergio Martínez**, camarógrafo con más de 15 años de experiencia en televisión (Televen, Venevisión, RCTV), eventos y producciones 4K. Esta aplicación web permite gestionar el contenido del CV en tiempo real mediante un panel de administración integrado.
 
-## React Compiler
+## ✨ Características
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🚀 **Interfaz Moderna**: Diseño oscuro (slate-950) con efectos de desenfoque ambiental y animaciones fluidas.
+- ✍️ **Edición en Vivo**: Panel de administrador para editar textos, experiencia, habilidades y educación directamente desde la interfaz.
+- 📁 **Gestión de Medios**: Subida de imágenes y videos configurada con Cloudinary.
+- ☁️ **Sincronización en Tiempo Real**: Persistencia de datos mediante Firebase Firestore.
+- 📄 **Generación de CV**: Botón dedicado para imprimir/exportar el perfil como PDF optimizado.
+- 📱 **Totalmente Responsivo**: Experiencia optimizada para móviles y tablets.
 
-## Expanding the ESLint configuration
+## 🛠️ Stack Tecnológico
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend**: React 19 (Hooks, Suspense).
+- **Estilos**: Tailwind CSS 3.
+- **Iconografía**: Lucide React.
+- **Backend / DB**: Firebase Firestore & Firebase Auth (Google Login).
+- **Almacenamiento de Multimedia**: Cloudinary API.
+- **Bundler**: Vite 7.
+
+## 🚀 Instalación y Uso
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone <url-del-repositorio>
+   cd sergio-portfolio
+   ```
+
+2. **Instalar dependencias:**
+   ```bash
+   npm install
+   ```
+
+3. **Configurar Firebase & Cloudinary:**
+   Crea un archivo de configuración de Firebase en `src/firebase.js` y asegúrate de tener los permisos necesarios en Cloudinary (ver variables en `App.jsx`).
+
+4. **Ejecutar en desarrollo:**
+   ```bash
+   npm run dev
+   ```
+
+## 📧 Contacto
+
+- **Ubicación**: CABA, Argentina.
+- **LinkedIn**: [Sergio Martinez](https://www.linkedin.com/in/sergio-martinez-cam)
+- **Email**: sergiomartinez2055@gmail.com
+
+---
+*Desarrollado con ❤️ para Sergio Martínez.*
