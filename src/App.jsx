@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X } from 'lucide-react';
+import { Camera, Film, Video, Mail, Phone, Linkedin, MapPin, ChevronDown, Play, Pause, Award, Clapperboard, MonitorPlay, FileDown, LogIn, LogOut, Plus, Trash2, Image as ImageIcon, X, Menu } from 'lucide-react';
 import { auth, googleProvider, db } from './firebase';
 import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import EditableText from './components/EditableText';
+import ProfileImage from './components/ProfileImage';
+import TimelineItem from './components/TimelineItem';
+import SkillCard from './components/SkillCard';
+import GallerySection from './components/GallerySection';
 // Eliminamos Firebase Storage por restricciones de facturación
 
 const App = () => {
@@ -12,6 +17,7 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cvData, setCvData] = useState({
     hero: {
       titleLine1: "CAPTANDO",
@@ -49,7 +55,7 @@ const App = () => {
     const docRef = doc(db, "portfolio", "sergio");
     const unsubFirestore = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        setCvData(docSnap.data());
+        setCvData(prev => ({ ...prev, ...docSnap.data() }));
       }
     });
 
@@ -75,6 +81,10 @@ const App = () => {
       unsubFirestore();
     };
   }, []);
+
+  if (!cvData || !cvData.hero) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white animate-pulse">Cargando portafolio...</div>;
+  }
 
   const updateData = async (path, value) => {
     const newData = { ...cvData };
@@ -191,14 +201,16 @@ const App = () => {
       </div>
 
       {/* Navegación */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-slate-950/80 backdrop-blur-md border-b border-slate-800 py-4' : 'bg-transparent py-6'}`}>
-        <div className="container mx-auto px-6 flex justify-between items-center">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isMenuOpen ? 'bg-slate-950/80 backdrop-blur-md border-b border-slate-800' : 'bg-transparent'} ${isMenuOpen ? 'pb-4' : ''}`}>
+        <div className="container mx-auto px-6 flex justify-between items-center py-4">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">
             <div className={`w-3 h-3 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-slate-500'}`}></div>
             SERGIO MARTINEZ
           </div>
+
+          {/* Desktop Menu */}
           <div className="hidden md:flex gap-8 text-sm font-medium tracking-wide items-center">
-            {['Experiencia', 'Habilidades', 'Educación', 'Contacto'].map((item) => (
+            {['Experiencia', 'Habilidades', 'Galería', 'Educación', 'Contacto'].map((item) => (
               <button
                 key={item}
                 onClick={() => scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""))}
@@ -208,7 +220,6 @@ const App = () => {
               </button>
             ))}
 
-            {/* Admin Controls */}
             {isAdmin && (
               <button
                 onClick={() => setIsEditing(!isEditing)}
@@ -239,7 +250,73 @@ const App = () => {
               </button>
             )}
           </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4">
+            <div className="container mx-auto px-6 flex flex-col gap-4 text-sm font-medium tracking-wide items-center">
+              {['Experiencia', 'Habilidades', 'Galería', 'Educación', 'Contacto'].map((item) => (
+                <button
+                  key={item}
+                  onClick={() => {
+                    scrollTo(item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+                    setIsMenuOpen(false);
+                  }}
+                  className="hover:text-blue-400 transition-colors uppercase py-2"
+                >
+                  {item}
+                </button>
+              ))}
+
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setIsEditing(!isEditing);
+                    setIsMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-bold transition-all ${isEditing ? 'bg-red-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
+                >
+                  {isEditing ? <X size={14} /> : <Plus size={14} />}
+                  {isEditing ? 'DETENER EDICIÓN' : 'MODO EDICIÓN'}
+                </button>
+              )}
+
+              {user ? (
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors group py-2"
+                  title="Cerrar Sesión"
+                >
+                  <span className="text-xs font-bold tracking-widest">LOGOUT</span>
+                  <LogOut size={18} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    login();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 text-slate-500 hover:text-blue-400 transition-colors group py-2"
+                  title="Acceso Admin"
+                >
+                  <span className="text-xs font-bold tracking-widest">ADMIN</span>
+                  <LogIn size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -421,61 +498,13 @@ const App = () => {
           </div>
         </div>
       </section>
-{/* 
-      Sección de Galería (Media)
-      <section id="galeria" className="py-24 relative z-10 bg-slate-950">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center gap-3 mb-16">
-            <div className="h-px bg-cyan-500 w-12"></div>
-            <h2 className="text-3xl font-bold tracking-tight uppercase">Galería de Trabajo</h2>
-            {isEditing && (
-              <button
-                onClick={() => {
-                  const newMedia = [...(cvData.media || []), { title: "Nuevo Item", url: "", type: "image" }];
-                  updateData('media', newMedia);
-                }}
-                className="bg-blue-600 p-2 rounded-full hover:bg-blue-500 ml-4 transition-all"
-              >
-                <Plus size={20} />
-              </button>
-            )}
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cvData.media && cvData.media.map((item, index) => (
-              <MediaItem
-                key={index}
-                item={item}
-                isEditing={isEditing}
-                onDelete={() => {
-                  const newMedia = [...cvData.media];
-                  newMedia.splice(index, 1);
-                  updateData('media', newMedia);
-                }}
-                onUpdate={(field, val) => {
-                  const newMedia = [...cvData.media];
-                  newMedia[index][field] = val;
-                  updateData('media', newMedia);
-                }}
-                onUpload={uploadFile}
-              />
-            ))}
-
-            {isEditing && (
-              <button
-                onClick={() => {
-                  const newMedia = [...(cvData.media || []), { title: "Nuevo Item", url: "", type: "image" }];
-                  updateData('media', newMedia);
-                }}
-                className="border-2 border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center text-slate-500 hover:border-cyan-500 hover:text-cyan-500 transition-all aspect-video"
-              >
-                <Plus size={32} />
-                <span className="mt-2 font-bold uppercase text-xs">Añadir Foto/Video</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </section> */}
+      {/* Sección de Galería */}
+      <GallerySection
+        media={cvData.media || []}
+        isAdmin={isAdmin || isEditing}
+        onUpdate={(newMedia) => updateData('media', newMedia)}
+      />
 
       {/* Sección de Educación */}
       <section id="educacion" className="py-24 bg-slate-900/30 border-y border-slate-800">
@@ -581,265 +610,6 @@ const App = () => {
         </div>
       </footer>
 
-    </div>
-  );
-};
-
-// --- Sub-componentes ---
-
-const EditableText = ({ tag: Tag = 'span', text, onSave, isEditing, className = "" }) => {
-  if (isEditing) {
-    return (
-      <Tag
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={(e) => onSave(e.target.innerText)}
-        className={`${className} border-b border-dashed border-blue-500 outline-none focus:border-solid focus:bg-blue-500/10 px-1`}
-      >
-        {text}
-      </Tag>
-    );
-  }
-  return <Tag className={className}>{text}</Tag>;
-};
-
-const ProfileImage = ({ url, isEditing, onSave, onUpload }) => {
-  const [imgSrc, setImgSrc] = useState(url || 'sergio.jpg');
-  const [hasError, setHasError] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  useEffect(() => {
-    setImgSrc(url || 'sergio.jpg');
-    setHasError(false);
-  }, [url]);
-
-  const handleError = () => {
-    if (!hasError) {
-      setHasError(true);
-      setImgSrc("https://via.placeholder.com/400x400/0f172a/3b82f6?text=Sergio+Martinez");
-    }
-  };
-
-  const handleEdit = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/jpeg,image/jpg,image/png,image/gif,image/webp';
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        setUploading(true);
-        try {
-          const downloadURL = await onUpload(file, 'profile');
-          onSave(downloadURL);
-        } catch (error) {
-          console.error("Upload failed", error);
-          // El error ya fue mostrado en uploadFile
-        } finally {
-          setUploading(false);
-        }
-      }
-    };
-    input.click();
-  };
-
-  return (
-    <div className="w-56 h-56 rounded-full overflow-hidden border-4 border-slate-800 relative z-10 group-hover:scale-105 transition-transform duration-500 bg-slate-800">
-      <img
-        src={imgSrc}
-        alt="Sergio Martinez"
-        onError={handleError}
-        className={`w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity ${uploading ? 'animate-pulse blur-sm' : ''}`}
-      />
-      <div className="absolute inset-0 bg-blue-500/10 mix-blend-overlay"></div>
-
-      {isEditing && (
-        <>
-          <button
-            onClick={handleEdit}
-            disabled={uploading}
-            className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
-            title="Cambiar Foto de Perfil"
-          >
-            {uploading ? (
-              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <ImageIcon size={32} className="text-white mb-2" />
-                <span className="text-xs text-white/80">JPG, PNG, GIF, WebP</span>
-              </>
-            )}
-          </button>
-        </>
-      )}
-    </div>
-  );
-};
-
-const TimelineItem = ({ role, company, location, period, description, isEditing, onSave }) => (
-  <div className="relative pl-8 pb-12 last:pb-0 group">
-    <div className="absolute left-[-9px] top-0 w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-600 group-hover:border-blue-500 group-hover:scale-125 transition-all duration-300 z-10"></div>
-    <div className="flex flex-col md:flex-row md:items-baseline md:justify-between mb-2">
-      <EditableText
-        tag="h3"
-        text={role}
-        isEditing={isEditing}
-        onSave={(val) => onSave('role', val)}
-        className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors"
-      />
-      <EditableText
-        tag="span"
-        text={period}
-        isEditing={isEditing}
-        onSave={(val) => onSave('period', val)}
-        className="text-sm font-mono text-slate-500 bg-slate-900 px-2 py-1 rounded border border-slate-800"
-      />
-    </div>
-    <div className="text-blue-500 font-medium mb-3 flex items-center gap-2">
-      <EditableText
-        text={company}
-        isEditing={isEditing}
-        onSave={(val) => onSave('company', val)}
-      />
-      <span className="text-slate-600">•</span>
-      <EditableText
-        tag="span"
-        text={location}
-        isEditing={isEditing}
-        onSave={(val) => onSave('location', val)}
-        className="text-slate-400 text-sm font-normal"
-      />
-    </div>
-    <EditableText
-      tag="p"
-      text={description}
-      isEditing={isEditing}
-      onSave={(val) => onSave('description', val)}
-      className="text-slate-400 leading-relaxed w-full"
-    />
-  </div>
-);
-
-const SkillCard = ({ title, desc, isEditing, onSave }) => (
-  <div className="p-6 bg-slate-900/50 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-blue-500/50 group transition-all duration-300 cursor-default">
-    <div className="w-12 h-12 rounded-lg bg-slate-950 flex items-center justify-center text-blue-500 mb-4 group-hover:scale-110 transition-transform">
-      <Clapperboard size={24} />
-    </div>
-    <EditableText
-      tag="h3"
-      text={title}
-      isEditing={isEditing}
-      onSave={(val) => onSave('title', val)}
-      className="text-lg font-bold text-white mb-2 block"
-    />
-    <EditableText
-      tag="p"
-      text={desc}
-      isEditing={isEditing}
-      onSave={(val) => onSave('desc', val)}
-      className="text-slate-400 text-sm block"
-    />
-  </div>
-);
-
-const MediaItem = ({ item, isEditing, onDelete, onUpdate, onUpload }) => {
-  const [uploading, setUploading] = useState(false);
-
-  const handleUploadClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime';
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        setUploading(true);
-        try {
-          const type = file.type.startsWith('video') ? 'video' : 'image';
-          const downloadURL = await onUpload(file, 'media');
-          onUpdate('url', downloadURL);
-          onUpdate('type', type);
-        } catch (error) {
-          console.error("Upload failed", error);
-          // El error ya fue mostrado en uploadFile
-        } finally {
-          setUploading(false);
-        }
-      }
-    };
-    input.click();
-  };
-
-  return (
-    <div className="relative group overflow-hidden rounded-2xl aspect-video bg-slate-900 border border-slate-800">
-      {item.type === 'video' ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900 overflow-hidden">
-          {item.url ? (
-            <video src={item.url} className="w-full h-full object-cover" />
-          ) : (
-            <Video size={48} className="text-slate-700" />
-          )}
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
-          {item.url ? (
-            <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
-          ) : (
-            <ImageIcon size={48} className="text-slate-700" />
-          )}
-        </div>
-      )}
-
-      {uploading && (
-        <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-30">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs font-bold text-blue-400">SUBIENDO...</span>
-          </div>
-        </div>
-      )}
-
-      {isEditing && (
-        <>
-          <button
-            onClick={onDelete}
-            className="absolute top-4 right-4 bg-red-500 p-2 rounded-full hover:bg-red-600 z-20 opacity-0 group-hover:opacity-100 transition-opacity"
-            title="Eliminar"
-          >
-            <Trash2 size={16} />
-          </button>
-          <button
-            onClick={handleUploadClick}
-            disabled={uploading}
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
-            title="Subir imagen o video"
-          >
-            <ImageIcon size={32} className="text-white" />
-            <span className="text-xs text-white/80 px-4 text-center">
-              Imágenes: JPG, PNG, GIF, WebP<br />
-              Videos: MP4, WebM, MOV
-            </span>
-          </button>
-        </>
-      )}
-
-      <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950 to-transparent z-10">
-        <EditableText
-          text={item.title}
-          isEditing={isEditing}
-          onSave={(val) => onUpdate('title', val)}
-          className="text-sm font-bold block"
-        />
-        {isEditing && (
-          <div className="flex items-center gap-2 mt-1">
-            <EditableText
-              text={item.url || "O subir archivo..."}
-              isEditing={isEditing}
-              onSave={(val) => onUpdate('url', val)}
-              className="text-[10px] text-slate-500 block truncate flex-1"
-            />
-            <span className="text-[10px] uppercase font-bold text-slate-700">{item.type}</span>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
